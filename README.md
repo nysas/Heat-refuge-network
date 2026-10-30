@@ -1,5 +1,11 @@
-# Heat-refuge-network
-Smart-city simulation that ranks nearby public cooling spaces by thermal comfort, crowding, distance, amenities and accessibility, and guides people to the best heat refuge in real time.
+# Heat Refuge Network
+
+A smart-city system that finds the safest, most comfortable nearby public space to escape extreme heat, in real time.
+
+**[Live demo](https://nysas.github.io/Heat-refuge-network/)**
+
+![Heat Refuge Network dashboard](screenshots/dashboard.png)
+
 During a heatwave, cities already have cool public spaces: libraries, malls, metro stations, community halls. But people have no live way to know which one is open, actually cool and not already full. Heat Refuge Network scores every refuge on live conditions and sends each person to the best one that still has space.
 
 ## Features
@@ -7,7 +13,7 @@ During a heatwave, cities already have cool public spaces: libraries, malls, met
 - **Live refuge ranking**: every open refuge gets a Refuge Comfort Score (0–100), with an explainable breakdown of its five sub-scores
 - **Street-level heat map**: refuges coloured by score, with a walking route to your best option
 - **Location-aware**: click or tap the map to move yourself and the ranking updates instantly
-- **Scenario controls**: time of day, a "Play the day" animation, heatwave intensity and user profile (e.g. reduced mobility)
+- **Scenario controls**: time of day, a "Play the day" animation, heatwave intensity and user profile (general public, or elderly / wheelchair user)
 - **Tunable weights**: change how much each factor counts and see the ranking change
 - **Heat-rush test**: simulates 400 people seeking shelter at once, with and without the system
 - **Coverage-gaps view**: shows planners which areas are more than 900 m from a cool refuge with space
@@ -18,15 +24,17 @@ Each open refuge gets five sub-scores between 0 and 1, combined into a weighted 
 
 S = 100 × Σ(wᵢ · sᵢ) / Σwᵢ
 
-| Component | Weight | Rule |
+| Component | Default weight | Rule |
 |---|---|---|
-| Thermal comfort | 35 | Indoor heat index: full score at 26 °C, falling to 0 at 41 °C |
-| Crowding | 25 | Full score below 50% of capacity, falling to 0 when full |
-| Distance | 20 | Exponential decay, d₀ = 900 m (500 m for reduced mobility) |
+| Thermal comfort | 35 | Indoor heat index: 1 at 26 °C, falling linearly to 0 at 41 °C |
+| Crowding | 25 | 1 up to 50% of capacity, falling as the refuge fills, 0 when full |
+| Distance | 20 | e^(−d / d₀) with d₀ = 900 m (500 m for elderly or wheelchair users) |
 | Amenities | 10 | Share present of water, seating, toilets and first aid |
-| Accessibility | 10 | Step-free access; hidden for wheelchair users if absent |
+| Accessibility | 10 | 1 with step-free access, otherwise 0.6 (0 for wheelchair users) |
 
-Closed refuges score 0 and drop out of the ranking.
+For elderly or wheelchair users, a refuge without step-free access also has its total score cut by 60%, which pushes it to the bottom of the ranking. Closed refuges score 0 and drop out.
+
+The heat index is the US National Weather Service Rothfusz regression, computed from temperature and humidity. Walking distance is measured along the street grid.
 
 ## Results (simulation)
 
@@ -41,10 +49,15 @@ Seeded simulation of a 3 km × 2 km coastal district with eight refuges (capacit
 
 The main finding: in most runs the district had enough space. Information, not capacity, was the bottleneck.
 
+![Heat-rush test results](screenshots/heat-rush-test.png)
+
+The coverage-gaps view shows where no cool refuge with space is within 900 m, so planners can see where to add refuges or extend opening hours.
+
+![Coverage gaps](screenshots/coverage-gaps.png)
 
 ## Running it
 
-Download the repository and open `Heat Refuge Network.html` in any modern browser. No installation or server is needed.
+Open the [live demo](https://nysas.github.io/Heat-refuge-network/), or download the repository and open `index.html` in any modern browser. No installation or server is needed.
 
 ## Limitations
 
