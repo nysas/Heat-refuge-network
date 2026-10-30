@@ -2,7 +2,7 @@
 
 A smart-city system that finds the safest, most comfortable nearby public space to escape extreme heat, in real time.
 
-**[Live demo](https://nysas.github.io/Heat-refuge-network/)**
+**[Live demo]([https://nysas.github.io/Heat-refuge-network/])**
 
 ![Heat Refuge Network dashboard](screenshots/dashboard.png)
 
