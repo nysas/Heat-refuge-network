@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Heat Refuge Network: Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2F3;--panel:#FFFFFF;--ink:#1B2631;--muted:#5A6B78;--line:#D9E1E4;--soft:#F4F7F8;
+  --ember:#D9481F;--teal:#16836F;--amber:#B97708;--grey:#8E9AA4;--sea:#BFDCE6;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#10181E;--panel:#19232B;--ink:#E4EBEE;--muted:#9AABB7;--line:#2B3943;--soft:#1F2C35;--ember:#F07A55;--teal:#3CC2A8;--amber:#E6B04A;--grey:#7D8A94;--sea:#1D3E4D;}
+}
+:root[data-theme="dark"]{--bg:#10181E;--panel:#19232B;--ink:#E4EBEE;--muted:#9AABB7;--line:#2B3943;--soft:#1F2C35;--ember:#F07A55;--teal:#3CC2A8;--amber:#E6B04A;--grey:#7D8A94;--sea:#1D3E4D;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 20px 48px}
+h1,h2{font-family:'Source Serif 4',Cambria,Georgia,serif;margin:0;line-height:1.15}
+h1{font-size:clamp(26px,3.4vw,38px)}
+h2{font-size:21px;margin-bottom:6px}
+p{margin:0}
+.muted{color:var(--muted)}
+header{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+header .sub{color:var(--muted);margin-top:4px;max-width:60ch}
+.readouts{display:flex;gap:22px;flex-wrap:wrap}
+.ro{display:flex;flex-direction:column}
+.ro b{font-size:26px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.ro span{font-size:12.5px;color:var(--muted)}
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12.5px;font-weight:600;color:#fff;margin-top:4px;width:max-content}
+.grid{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(300px,1fr);gap:18px}
+@media (max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.maphead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink);padding:6px 12px;font:inherit;font-size:13.5px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+canvas{display:block;width:100%;border-radius:6px;cursor:crosshair;touch-action:manipulation}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12.5px;color:var(--muted);align-items:center}
+.ramp{width:120px;height:10px;border-radius:3px;background:linear-gradient(90deg,#FDF2C8,#FADA92,#F6B46E,#EE8456,#CC4A3A)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.list{display:flex;flex-direction:column;gap:8px;max-height:640px;overflow:auto;margin-top:8px}
+.item{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--soft)}
+.item.top{border-color:var(--teal);box-shadow:inset 0 0 0 1px var(--teal)}
+.row1{display:flex;align-items:center;gap:10px}
+.rank{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12.5px;font-weight:600;flex:none}
+.name{font-weight:600;line-height:1.25}
+.type{font-size:12.5px;color:var(--muted)}
+.score{margin-left:auto;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.facts{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--muted);margin:6px 0 4px 34px}
+.bars{margin-left:34px;display:grid;grid-template-columns:78px 1fr 30px;gap:3px 8px;font-size:11.5px;color:var(--muted);align-items:center}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--teal)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:18px}
+label{display:block;font-size:13.5px;font-weight:500;margin-bottom:4px}
+.ctl{margin-bottom:12px}
+.ctlrow{display:flex;align-items:center;gap:10px}
+input[type=range]{width:100%;accent-color:var(--ember)}
+select{font:inherit;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:100%}
+.btn{font:inherit;font-weight:600;border:0;border-radius:8px;padding:9px 16px;background:var(--ink);color:var(--panel);cursor:pointer}
+.btn.alt{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+.btn:focus-visible,.seg button:focus-visible,input:focus-visible,select:focus-visible,canvas:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.val{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;min-width:44px;text-align:right}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12.5px;color:var(--muted);font-weight:500}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.headline{font-size:17px;margin:10px 0 12px;max-width:70ch}
+.test{margin-top:18px}
+.testgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:18px;align-items:start}
+@media (max-width:900px){.testgrid{grid-template-columns:1fr}}
+.tablewrap{overflow-x:auto}
+details{margin-top:18px}
+summary{cursor:pointer;font-weight:600;font-size:16px}
+.method{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px 28px;margin-top:12px;font-size:14px}
+.method h3{font-size:14.5px;margin:0 0 4px}
+code{font-size:13px;background:var(--soft);padding:1px 5px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Heat Refuge Network</h1>
+    <p class="sub">Simulation of a 3 km × 2 km coastal city district with eight public refuges. Click or tap the map to move yourself, then change the time of day.</p>
+  </div>
+  <div class="readouts" aria-live="polite">
+    <div class="ro"><b id="rClock">14:00</b><span>Time</span></div>
+    <div class="ro"><b id="rTemp">37°C</b><span>Outdoor temp</span></div>
+    <div class="ro"><b id="rRH">47%</b><span>Humidity</span></div>
+    <div class="ro"><b id="rHI">45°C</b><span>Feels like (heat index)</span><span class="chip" id="rCat">Danger</span></div>
+  </div>
+</header>
+
+<div class="grid">
+  <section class="card">
+    <div class="maphead">
+      <h2 id="mapTitle">Street-level heat</h2>
+      <div class="seg" role="group" aria-label="Map layer">
+        <button id="mHeat" aria-pressed="true">Heat map</button>
+        <button id="mCov" aria-pressed="false">Coverage gaps</button>
+      </div>
+    </div>
+    <canvas id="map" tabindex="0" aria-label="City map. Click to set your location."></canvas>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section class="card">
+    <h2>Best refuges for you now</h2>
+    <p class="muted" style="font-size:13.5px">Ranked by Refuge Comfort Score (0–100).</p>
+    <div class="list" id="list"></div>
+  </section>
+</div>
+
+<div class="controls">
+  <section class="card">
+    <h2>Conditions</h2>
+    <div class="ctl">
+      <label for="time">Time of day</label>
+      <div class="ctlrow"><input type="range" id="time" min="5" max="23" step="0.25" value="14"><span class="val" id="timeV">14:00</span></div>
+    </div>
+    <div class="ctl ctlrow"><button class="btn" id="play">Play the day</button></div>
+    <div class="ctl">
+      <label for="boost">Heatwave intensity (added to normal peak of 38°C)</label>
+      <div class="ctlrow"><input type="range" id="boost" min="0" max="5" step="0.5" value="0"><span class="val" id="boostV">+0°C</span></div>
+    </div>
+    <div class="ctl">
+      <label for="profile">Who is looking for a refuge?</label>
+      <select id="profile">
+        <option value="general">General public</option>
+        <option value="vulnerable">Elderly or wheelchair user</option>
+      </select>
+    </div>
+  </section>
+  <section class="card">
+    <h2>Score weights</h2>
+    <p class="muted" style="font-size:13.5px;margin-bottom:10px">How much each factor counts in the ranking.</p>
+    <div id="weights"></div>
+    <button class="btn alt" id="resetW">Reset weights</button>
+  </section>
+</div>
+
+<section class="card test">
+  <h2>Heat-rush test</h2>
+  <p class="muted" style="max-width:75ch">400 people across the district look for shelter at the selected time. Without the system, each walks to the nearest refuge they know of, not knowing if it is open or full. With the system, each is sent to the best-scoring refuge that still has space, and occupancy updates as people arrive.</p>
+  <div class="ctlrow" style="margin-top:12px;flex-wrap:wrap">
+    <button class="btn" id="runTest">Run the test</button>
+    <div class="seg" role="group" aria-label="Replay" id="replay" hidden>
+      <button id="showA" aria-pressed="false">Without system</button>
+      <button id="showB" aria-pressed="true">With system</button>
+    </div>
+  </div>
+  <div id="results"></div>
+</section>
+
+<details>
+  <summary>How the model works</summary>
+  <div class="method">
+    <div><h3>Outdoor conditions</h3><p>Temperature follows a daily cycle: 29°C at 3 am, peaking at 38°C (plus heatwave boost) at 3 pm. Humidity moves opposite, 75% at night to 45% in the afternoon. Local temperature adds an urban heat island: +2.2°C in the dense centre, +1.2°C near the industrial area, up to −1.8°C in the park and −2.2°C at the coast.</p></div>
+    <div><h3>Heat index</h3><p>“Feels like” temperature from the US National Weather Service Rothfusz regression, using temperature and humidity. Categories: under 27°C comfortable, 27–32 caution, 32–41 extreme caution, 41–54 danger, above 54 extreme danger.</p></div>
+    <div><h3>Indoor conditions</h3><p>Air-conditioned spaces hold 25°C but warm up once more than 60% full. Fan-cooled halls sit about 1.5°C below outdoors and warm as they fill. Shade is 3°C cooler than outside; misting shelters 3.5°C cooler with higher humidity.</p></div>
+    <div><h3>Occupancy</h3><p>Each refuge’s crowd grows with outdoor heat index, scaled by capacity and popularity, with small random variation. Closed refuges are empty and excluded from ranking.</p></div>
+    <div><h3>Refuge Comfort Score</h3><p><code>Score = Σ wᵢ·sᵢ / Σ wᵢ × 100</code> where the parts are: comfort (indoor heat index, 26°C → 1, 41°C → 0), crowding (1 when under half full, falling to 0 when full), distance (<code>e^(−d/900 m)</code>, 500 m for vulnerable users), amenities (water, seating, toilet, first aid) and accessibility.</p></div>
+    <div><h3>Assumptions</h3><p>Walking distance is measured along a street grid (Manhattan distance). All data is synthetic and seeded, so the same settings always give the same results. In deployment, IoT sensors and open weather APIs replace the generated values.</p></div>
+  </div>
+</details>
+</div>
+
+<script>
+(function(){
+const W=3000,H=2000,LAND=2880;
+const REF=[
+ {id:1,name:'Central Library',type:'Library',x:900,y:700,cap:150,cool:'ac',open:9,close:20,pop:.7,am:[1,1,1,0],wc:1},
+ {id:2,name:'Riverside Mall',type:'Shopping mall',x:1500,y:1120,cap:800,cool:'ac',open:10,close:22,pop:1,am:[1,1,1,1],wc:1},
+ {id:3,name:'Park Road Metro',type:'Metro station',x:1250,y:380,cap:300,cool:'ac',open:5,close:23,pop:.8,am:[0,1,1,1],wc:1},
+ {id:4,name:'Ward 12 Community Hall',type:'Community hall, fans',x:2200,y:1500,cap:120,cool:'fan',open:8,close:18,pop:.6,am:[1,1,1,0],wc:0},
+ {id:5,name:'Banyan Park Pavilion',type:'Shaded park',x:600,y:1500,cap:200,cool:'shade',open:5,close:21,pop:.5,am:[1,1,0,0],wc:1},
+ {id:6,name:'Primary Health Centre',type:'Health centre',x:1950,y:620,cap:60,cool:'ac',open:8,close:17,pop:.6,am:[1,1,1,1],wc:1},
+ {id:7,name:'Bus Terminus Hall',type:'Transit hall, fans',x:420,y:520,cap:250,cool:'fan',open:4,close:24,pop:.85,am:[1,1,1,0],wc:1},
+ {id:8,name:'Beachfront Shelter',type:'Misting shelter',x:2720,y:950,cap:100,cool:'mist',open:6,close:20,pop:.55,am:[1,1,0,0],wc:1},
+];
+const DEFW={comfort:35,crowd:25,dist:20,amen:10,access:10};
+const WLAB={comfort:'Thermal comfort',crowd:'Crowding',dist:'Distance',amen:'Amenities',access:'Accessibility'};
+const S={h:14,boost:0,profile:'general',w:{...DEFW},user:{x:1300,y:900},mode:'heat',playing:null,test:null,show:'B',anim:null};
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const g=(x,y,cx,cy,s)=>Math.exp(-((x-cx)**2+(y-cy)**2)/(2*s*s));
+function hash(a,b){const x=Math.sin(a*127.1+b*311.7)*43758.5453;return x-Math.floor(x);}
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const cyc=h=>Math.cos(2*Math.PI*(h-15)/24);
+const cityT=h=>33.5+4.5*cyc(h)+S.boost;
+const cityRH=h=>60-15*cyc(h);
+function offset(x,y){return 2.2*g(x,y,1400,900,650)+1.2*g(x,y,2300,300,350)-1.8*g(x,y,600,1500,300)-2.2*Math.exp(-Math.max(0,LAND-x)/300);}
+const localT=(x,y,h)=>cityT(h)+offset(x,y);
+function HI(tc,rh){
+  const T=tc*9/5+32;let hi=0.5*(T+61+(T-68)*1.2+rh*0.094);
+  if((hi+T)/2>=80){hi=-42.379+2.04901523*T+10.14333127*rh-.22475541*T*rh-.00683783*T*T-.05481717*rh*rh+.00122874*T*T*rh+.00085282*T*rh*rh-.00000199*T*T*rh*rh;}
+  return (hi-32)*5/9;
+}
+function cat(hi){
+  if(hi<27)return['Comfortable','#16836F'];if(hi<32)return['Caution','#8A8A12'];
+  if(hi<41)return['Extreme caution','#C27A0E'];if(hi<54)return['Danger','#D9481F'];return['Extreme danger','#9E1C1C'];
+}
+const isOpen=(r,h)=>h>=r.open&&h<r.close;
+function baseOcc(r,h){
+  if(!isOpen(r,h))return 0;
+  const hiOut=HI(localT(r.x,r.y,h),cityRH(h));
+  const demand=clamp((hiOut-28)/14,.05,1.1);
+  const noise=.9+.2*hash(r.id,Math.floor(h*2));
+  return Math.round(r.cap*r.pop*demand*noise*.8+(r.type==='Shopping mall'?.2*r.cap:0));
+}
+function indoor(r,h,occ){
+  const To=localT(r.x,r.y,h),RHo=cityRH(h),ratio=Math.min(occ/r.cap,1.5);let T,RH;
+  if(r.cool==='ac'){T=25+5*Math.max(0,ratio-.6)/.4+.08*Math.max(0,To-32);RH=55;}
+  else if(r.cool==='fan'){T=To-1.5+2*ratio;RH=RHo;}
+  else if(r.cool==='shade'){T=To-3+.8*ratio;RH=RHo;}
+  else{T=To-3.5+.8*ratio;RH=Math.min(90,RHo+10);}
+  return{T,RH,hi:HI(T,RH)};
+}
+const mdist=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+function score(r,pos,h,occ,profile){
+  const open=isOpen(r,h),d=mdist(r,pos),ratio=occ/r.cap,ind=indoor(r,h,occ);
+  const vul=profile==='vulnerable';
+  const p={
+    comfort:clamp((41-ind.hi)/15,0,1),
+    crowd:ratio<=.5?1:ratio<1?1-(ratio-.5)*1.6:0,
+    dist:Math.exp(-d/(vul?500:900)),
+    amen:r.am.reduce((a,b)=>a+b,0)/4,
+    access:r.wc?1:(vul?0:.6),
+  };
+  let sw=0,tot=0;for(const k in S.w){sw+=S.w[k];tot+=S.w[k]*p[k];}
+  let total=sw?tot/sw*100:0;
+  if(vul&&!r.wc)total*=.4;
+  if(!open)total=0;
+  return{r,open,d,ratio,occ,ind,p,total,full:ratio>=1};
+}
+
+/* ---------- canvas ---------- */
+const cv=document.getElementById('map'),ctx=cv.getContext('2d');
+let cw=0,chh=0,dpr=1,base=null;
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const HEATSTOPS=[[30,[253,242,200]],[33,[250,218,146]],[35.5,[246,180,110]],[38,[238,132,86]],[41,[204,74,58]]];
+function heatColor(t){
+  if(t<=HEATSTOPS[0][0])return HEATSTOPS[0][1];
+  for(let i=1;i<HEATSTOPS.length;i++){if(t<=HEATSTOPS[i][0]){const[a,ca]=HEATSTOPS[i-1],[b,cb]=HEATSTOPS[i];const f=(t-a)/(b-a);return ca.map((c,j)=>Math.round(c+(cb[j]-c)*f));}}
+  return HEATSTOPS[HEATSTOPS.length-1][1];
+}
+function resize(){
+  const w=cv.parentElement.clientWidth-32;cw=Math.max(260,w);chh=cw*H/W;dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(cw*dpr);cv.height=Math.round(chh*dpr);cv.style.height=chh+'px';base=null;draw();
+}
+const X=x=>x/W*cw,Y=y=>y/H*chh;
+function buildBase(scores){
+  const oc=document.createElement('canvas');oc.width=cv.width;oc.height=cv.height;const c=oc.getContext('2d');c.scale(dpr,dpr);
+  const cs=40,rh=cityRH(S.h);
+  const usable=scores.filter(s=>s.open&&!s.full&&s.ind.hi<34).map(s=>s.r);
+  for(let x=0;x<LAND;x+=cs)for(let y=0;y<H;y+=cs){
+    const cx=x+cs/2,cy=y+cs/2,t=localT(cx,cy,S.h);
+    const col=heatColor(t);
+    c.fillStyle=`rgb(${col})`;c.fillRect(X(x),Y(y),X(cs)+1,Y(cs)+1);
+    if(S.mode==='cov'){
+      let md=1e9;for(const r of usable)md=Math.min(md,Math.abs(r.x-cx)+Math.abs(r.y-cy));
+      if(md>900){c.fillStyle=`rgba(27,38,49,${clamp(.35+(md-900)/2500,.35,.72)})`;c.fillRect(X(x),Y(y),X(cs)+1,Y(cs)+1);}
+      else{c.fillStyle='rgba(255,255,255,.45)';c.fillRect(X(x),Y(y),X(cs)+1,Y(cs)+1);}
+    }
+  }
+  c.fillStyle=css('--sea');c.fillRect(X(LAND),0,cw-X(LAND),chh);
+  c.strokeStyle='rgba(255,255,255,.42)';
+  for(let x=0;x<=LAND;x+=250){c.lineWidth=x%1000===0?2.5:1;c.beginPath();c.moveTo(X(x),0);c.lineTo(X(x),chh);c.stroke();}
+  for(let y=0;y<=H;y+=250){c.lineWidth=y%1000===0?2.5:1;c.beginPath();c.moveTo(0,Y(y));c.lineTo(X(LAND),Y(y));c.stroke();}
+  c.fillStyle='rgba(27,38,49,.65)';c.font=`500 ${Math.max(10,cw/85)}px 'IBM Plex Sans',sans-serif`;
+  c.fillText('Banyan Park',X(470),Y(1780));c.fillText('City centre',X(1330),Y(820));c.fillText('Industrial area',X(2150),Y(180));
+  c.save();c.translate(X(2945),Y(1000));c.rotate(-Math.PI/2);c.textAlign='center';c.fillStyle='rgba(27,38,49,.55)';c.fillText('Sea',0,4);c.restore();
+  return oc;
+}
+function scoreColor(s){if(!s.open)return css('--grey');if(s.total>=65)return css('--teal');if(s.total>=45)return css('--amber');return css('--ember');}
+function pathPt(a,b,t){const dx=b.x-a.x,dy=b.y-a.y,L=Math.abs(dx)+Math.abs(dy)||1,s=t*L;if(s<=Math.abs(dx))return{x:a.x+Math.sign(dx)*s,y:a.y};return{x:b.x,y:a.y+Math.sign(dy)*(s-Math.abs(dx))};}
+let lastScores=[];
+function draw(){
+  if(!cw)return;
+  if(!base)base=buildBase(lastScores);
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(base,0,0);ctx.scale(dpr,dpr);
+  const ranked=lastScores.slice().sort((a,b)=>b.total-a.total);
+  const top=ranked[0]&&ranked[0].open?ranked[0]:null;
+  const animating=S.anim&&S.test;
+  const R=Math.max(9,cw/70);
+  if(top&&!animating){
+    ctx.strokeStyle='#1B2631';ctx.lineWidth=3;ctx.setLineDash([7,5]);
+    ctx.beginPath();ctx.moveTo(X(S.user.x),Y(S.user.y));ctx.lineTo(X(top.r.x),Y(S.user.y));ctx.lineTo(X(top.r.x),Y(top.r.y));ctx.stroke();ctx.setLineDash([]);
+  }
+  if(animating){
+    const t=S.anim.t,agents=S.test[S.show].agents;
+    for(const a of agents){const p=pathPt(a.o,a.dest,t);
+      ctx.fillStyle=t<1?'rgba(27,38,49,.75)':(a.status==='ok'?css('--teal'):a.status==='away'?css('--amber'):css('--ember'));
+      const rr=(R+5+a.jr*26)*Math.min(1,t*1.0001),jx=t<1?0:Math.cos(a.ja)*rr,jy=t<1?0:Math.sin(a.ja)*rr;
+      ctx.beginPath();ctx.arc(X(p.x)+jx,Y(p.y)+jy,2.3,0,7);ctx.fill();}
+  }
+  ranked.forEach((s,i)=>{
+    const x=X(s.r.x),y=Y(s.r.y);
+    if(s===top&&!animating){ctx.strokeStyle='#1B2631';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,R+6,0,7);ctx.stroke();}
+    ctx.fillStyle=scoreColor(s);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font=`600 ${R*1.05}px 'IBM Plex Sans',sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(s.open?String(i+1):'×',x,y+1);
+  });
+  if(!animating){
+    const ux=X(S.user.x),uy=Y(S.user.y);
+    ctx.fillStyle='#1B2631';ctx.strokeStyle='#fff';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(ux,uy,7,0,7);ctx.fill();ctx.stroke();
+    ctx.font=`600 ${Math.max(11,cw/75)}px 'IBM Plex Sans',sans-serif`;ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.lineWidth=3;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.strokeText('You',ux+11,uy);ctx.fillStyle='#1B2631';ctx.fillText('You',ux+11,uy);
+  }
+  ctx.textAlign='left';ctx.textBaseline='alphabetic';
+}
+cv.addEventListener('click',e=>{
+  const b=cv.getBoundingClientRect();const x=(e.clientX-b.left)/b.width*W,y=(e.clientY-b.top)/b.height*H;
+  S.user={x:clamp(x,20,LAND-20),y:clamp(y,20,H-20)};S.anim=null;update();
+});
+cv.addEventListener('keydown',e=>{
+  const st=100,k={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]}[e.key];
+  if(k){e.preventDefault();S.user={x:clamp(S.user.x+k[0],20,LAND-20),y:clamp(S.user.y+k[1],20,H-20)};S.anim=null;update();}
+});
+
+/* ---------- UI ---------- */
+const fmtT=h=>{const hh=Math.floor(h),mm=Math.round((h-hh)*60);return String(hh%24).padStart(2,'0')+':'+String(mm).padStart(2,'0');};
+const $=id=>document.getElementById(id);
+function legend(){
+  const L=$('legend');
+  const dots=`<span><i class="dot" style="background:var(--teal)"></i>Score 65+</span><span><i class="dot" style="background:var(--amber)"></i>45–64</span><span><i class="dot" style="background:var(--ember)"></i>Below 45</span><span><i class="dot" style="background:var(--grey)"></i>Closed</span>`;
+  if(S.anim&&S.test){L.innerHTML=`<span><i class="dot" style="background:var(--teal)"></i>Got space</span><span><i class="dot" style="background:var(--amber)"></i>Turned away (full)</span><span><i class="dot" style="background:var(--ember)"></i>Found it closed</span>`;return;}
+  L.innerHTML=S.mode==='heat'
+   ?`<span>Cooler</span><span class="ramp"></span><span>Hotter</span>${dots}<span>Dashed line: route to your best refuge</span>`
+   :`<span><i class="dot" style="background:rgba(27,38,49,.65);border-radius:2px"></i>Over 900 m walk from a cool refuge with space</span>${dots}`;
+}
+function renderList(scores){
+  const ranked=scores.slice().sort((a,b)=>b.total-a.total);
+  $('list').innerHTML=ranked.map((s,i)=>{
+    const r=s.r,c=cat(s.ind.hi);
+    const status=!s.open?`Closed now (opens ${fmtT(r.open)})`:s.full?`<b style="color:var(--ember)">Full</b> ${Math.round(s.ratio*100)}%`:`${Math.round(s.ratio*100)}% full`;
+    const bars=s.open?`<div class="bars">${Object.keys(WLAB).map(k=>`<span>${WLAB[k]}</span><div class="bar"><i style="width:${Math.round(s.p[k]*100)}%"></i></div><span>${Math.round(s.p[k]*100)}</span>`).join('')}</div>`:'';
+    return `<div class="item${i===0&&s.open?' top':''}">
+      <div class="row1"><span class="rank" style="background:${scoreColor(s)}">${s.open?i+1:'×'}</span>
+      <div><div class="name">${r.name}</div><div class="type">${r.type}</div></div>
+      <span class="score">${s.open?Math.round(s.total):'–'}</span></div>
+      <div class="facts"><span>${status}</span><span>${Math.round(s.d)} m walk</span>${s.open?`<span>Inside feels ${Math.round(s.ind.hi)}°C, <span style="color:${c[1]};font-weight:600">${c[0].toLowerCase()}</span></span>`:''}${r.wc?'':'<span>No wheelchair access</span>'}</div>
+      ${bars}</div>`;
+  }).join('');
+}
+function renderWeights(){
+  $('weights').innerHTML=Object.keys(WLAB).map(k=>`<div class="ctl"><label for="w_${k}">${WLAB[k]}</label><div class="ctlrow"><input type="range" id="w_${k}" min="0" max="50" step="5" value="${S.w[k]}"><span class="val" id="wv_${k}">${S.w[k]}</span></div></div>`).join('');
+  Object.keys(WLAB).forEach(k=>$('w_'+k).addEventListener('input',e=>{S.w[k]=+e.target.value;$('wv_'+k).textContent=S.w[k];update();}));
+}
+function update(keepTest){
+  const t=cityT(S.h),rh=cityRH(S.h),hi=HI(t,rh),c=cat(hi);
+  $('rClock').textContent=fmtT(S.h);$('rTemp').textContent=t.toFixed(1)+'°C';$('rRH').textContent=Math.round(rh)+'%';
+  $('rHI').textContent=Math.round(hi)+'°C';$('rCat').textContent=c[0];$('rCat').style.background=c[1];
+  $('timeV').textContent=fmtT(S.h);$('boostV').textContent='+'+S.boost+'°C';
+  lastScores=REF.map(r=>score(r,S.user,S.h,baseOcc(r,S.h),S.profile));
+  if(!keepTest&&S.test){S.test=null;S.anim=null;$('results').innerHTML='<p class="muted" style="margin-top:12px">Conditions changed. Run the test again for this time.</p>';$('replay').hidden=true;}
+  renderList(lastScores);base=null;legend();draw();
+}
+$('time').addEventListener('input',e=>{S.h=+e.target.value;update();});
+$('boost').addEventListener('input',e=>{S.boost=+e.target.value;update();});
+$('profile').addEventListener('change',e=>{S.profile=e.target.value;update(true);});
+$('resetW').addEventListener('click',()=>{S.w={...DEFW};renderWeights();update(true);});
+function setMode(m){S.mode=m;$('mHeat').setAttribute('aria-pressed',m==='heat');$('mCov').setAttribute('aria-pressed',m==='cov');$('mapTitle').textContent=m==='heat'?'Street-level heat':'Where no cool refuge is in reach';S.anim=null;base=null;legend();draw();}
+$('mHeat').onclick=()=>setMode('heat');$('mCov').onclick=()=>setMode('cov');
+$('play').addEventListener('click',()=>{
+  if(S.playing){clearInterval(S.playing);S.playing=null;$('play').textContent='Play the day';return;}
+  $('play').textContent='Pause';
+  S.playing=setInterval(()=>{S.h+=.25;if(S.h>23)S.h=5;$('time').value=S.h;update();},300);
+});
+
+/* ---------- heat-rush test ---------- */
+function runStrategy(kind,agentsSrc){
+  const occ={};REF.forEach(r=>occ[r.id]=baseOcc(r,S.h));
+  const agents=agentsSrc.map(a=>({...a}));
+  for(const a of agents){
+    let dest;
+    if(kind==='A'){dest=REF.reduce((b,r)=>mdist(r,a.o)<mdist(b,a.o)?r:b,REF[0]);}
+    else{
+      let best=null,bs=-1;
+      for(const r of REF){if(!isOpen(r,S.h)||occ[r.id]>=r.cap)continue;const s=score(r,a.o,S.h,occ[r.id],'general').total;if(s>bs){bs=s;best=r;}}
+      dest=best||REF.reduce((b,r)=>mdist(r,a.o)<mdist(b,a.o)?r:b,REF[0]);
+    }
+    a.dest=dest;a.dist=mdist(dest,a.o);
+    if(!isOpen(dest,S.h))a.status='closed';
+    else if(occ[dest.id]>=dest.cap)a.status='away';
+    else{a.status='ok';occ[dest.id]++;}
+  }
+  let ok=0,cl=0,aw=0,dsum=0,hisum=0;
+  for(const a of agents){
+    dsum+=a.dist;
+    if(a.status==='ok'){ok++;hisum+=indoor(a.dest,S.h,occ[a.dest.id]).hi;}
+    else{a.status==='closed'?cl++:aw++;hisum+=HI(localT(a.dest.x,a.dest.y,S.h),cityRH(S.h));}
+  }
+  const n=agents.length;
+  return{agents,ok:ok/n,closed:cl/n,away:aw/n,dist:dsum/n,hi:hisum/n};
+}
+function runTest(){
+  const R=rng(20260923),agents=[];
+  for(let i=0;i<400;i++){
+    let x,y;
+    if(R()<.6){const u=R()||1e-9,v=R();const m=Math.sqrt(-2*Math.log(u));x=1400+500*m*Math.cos(2*Math.PI*v);y=900+450*m*Math.sin(2*Math.PI*v);}
+    else{x=R()*LAND;y=R()*H;}
+    const ang=R()*6.283,rad=R();agents.push({o:{x:clamp(x,30,LAND-30),y:clamp(y,30,H-30)},ja:ang,jr:rad});
+  }
+  S.test={A:runStrategy('A',agents),B:runStrategy('B',agents)};
+  renderResults();$('replay').hidden=false;animate('B');
+}
+function animate(k){
+  S.show=k;$('showA').setAttribute('aria-pressed',k==='A');$('showB').setAttribute('aria-pressed',k==='B');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  S.anim={t:reduce?1:0};legend();const t0=performance.now(),dur=2600;
+  const step=now=>{if(!S.anim)return;S.anim.t=reduce?1:clamp((now-t0)/dur,0,1);const e=S.anim.t;S.anim.t=e<1?1-Math.pow(1-e,2):1;draw();if(e<1)requestAnimationFrame(step);};
+  requestAnimationFrame(step);
+}
+function renderResults(){
+  const A=S.test.A,B=S.test.B,pc=v=>Math.round(v*100)+'%';
+  const rows=[
+    ['Got space in an open refuge',pc(A.ok),pc(B.ok),A.ok,B.ok,true],
+    ['Walked to a closed refuge',pc(A.closed),pc(B.closed),A.closed,B.closed,false],
+    ['Turned away because it was full',pc(A.away),pc(B.away),A.away,B.away,false],
+    ['Average walk',Math.round(A.dist)+' m',Math.round(B.dist)+' m',A.dist,B.dist,false],
+    ['Average heat index felt on arrival',A.hi.toFixed(1)+'°C',B.hi.toFixed(1)+'°C',A.hi,B.hi,false],
+  ];
+  const diff=Math.round((B.ok-A.ok)*100);
+  const head=diff>0
+    ?`With the system, ${pc(B.ok)} of people found space in an open refuge, compared with ${pc(A.ok)} without it: ${diff} percentage points more people sheltered at ${fmtT(S.h)}.`
+    :`At ${fmtT(S.h)} both approaches shelter a similar share of people (${pc(A.ok)} vs ${pc(B.ok)}), usually because refuges have plenty of space at this hour. Try 14:00–16:00 or add a heatwave.`;
+  const occ=REF.map(r=>{const cnt=o=>o.agents.filter(a=>a.dest===r&&a.status==='ok').length;return`<tr><td>${r.name}</td><td class="n">${cnt(A)}</td><td class="n">${cnt(B)}</td></tr>`;}).join('');
+  $('results').innerHTML=`<p class="headline">${head}</p>
+  <div class="testgrid">
+   <div class="tablewrap"><table><thead><tr><th>Measure</th><th>Without system</th><th>With system</th></tr></thead><tbody>
+   ${rows.map(r=>{const better=r[5]?r[4]>r[3]:r[4]<r[3];return`<tr><td>${r[0]}</td><td class="n">${r[1]}</td><td class="n" style="${better?'color:var(--teal);font-weight:600':''}">${r[2]}</td></tr>`;}).join('')}
+   </tbody></table></div>
+   <div class="tablewrap"><table><thead><tr><th>People sheltered at each refuge</th><th>Without</th><th>With</th></tr></thead><tbody>${occ}</tbody></table></div>
+  </div>`;
+}
+$('runTest').addEventListener('click',runTest);
+$('showA').onclick=()=>S.test&&animate('A');$('showB').onclick=()=>S.test&&animate('B');
+
+renderWeights();
+window.addEventListener('resize',resize);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{base=null;draw();});
+update();resize();
+})();
+</script>
+</body>
+</html>
